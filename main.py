@@ -4,10 +4,11 @@ import cv2
 from PIL import Image, ImageChops
 import telegram
 import io
+import credentials as cred
 
 # Configuración de Telegram
-TOKEN = #CONSEGUIRLA CON CHATBOT
-CHAT_ID = #CONSEGUIRLAS CON CHATBOT
+TOKEN = cred.TOKEN
+CHAT_ID = cred.CHAT_ID
 
 # Función para comparar imágenes
 def images_are_equal(img1, img2):
