@@ -58,6 +58,13 @@ async def main():
                 current_image = Image.fromarray(cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB))
                 # Envía un mensaje por Telegram con la imagen
                 await send_telegram_message_with_image("¡Alerta! La imagen en pantalla se ha mantenido estática durante mucho tiempo.", current_image)
+            else:
+                                # Captura el fotograma actual
+                current_frame = capture_frame()
+                # Convierte el fotograma en una imagen
+                current_image = Image.fromarray(cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB))
+                # Envía un mensaje por Telegram con la imagen
+                await send_telegram_message_with_image("Distintas", current_image)
     except KeyboardInterrupt:
         print("\nPrograma detenido por el usuario.")
 
