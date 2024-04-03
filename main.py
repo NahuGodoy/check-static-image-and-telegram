@@ -7,6 +7,13 @@ from PIL import Image, ImageChops
 import telegram
 import io
 import credentials as cred
+import paho.mqtt.publish as publish
+
+#MQTT Configuración
+mqtt_host = "190.104.242.106"
+mqtt_port = 1883
+mqtt_user = "prgmqtt"
+mqtt_pass = "Prg.2023"
 
 # Configuración de audio
 RATE = 44100
@@ -39,7 +46,7 @@ async def send_telegram_message_with_image(message, image):
 
 # Función para capturar un fotograma desde la cámara virtual
 def capture_frame():
-    cap = cv2.VideoCapture(1)  # 0 para la primera cámara, 1 para la segunda, etc.
+    cap = cv2.VideoCapture(2)  # 0 para la primera cámara, 1 para la segunda, etc.
     ret, frame = cap.read()
     cap.release()
     return frame
@@ -48,10 +55,8 @@ def capture_frame():
 def check_static_image(timeout):
     previous_image = Image.fromarray(cv2.cvtColor(capture_frame(), cv2.COLOR_BGR2RGB))
     time.sleep(timeout)
-    print("Comparando")
     current_image = Image.fromarray(cv2.cvtColor(capture_frame(), cv2.COLOR_BGR2RGB))
     if images_are_equal(previous_image, current_image):
-        print("son iguales")
         return True
     previous_image = current_image
 
@@ -93,15 +98,31 @@ async def main():
                     print("Sending audio alert via Telegram...")
                     await send_telegram_message("¡Alerta! No se detecta audio desde hace 5 segundos.")
                     audio_alert_sent = True
-                # Continuar con la verificación de la imagen estática
-                if check_static_image(tiempo_de_espera):
-                    print("¡Alerta! La imagen en pantalla se ha mantenido estática durante mucho tiempo.")
-                    # Captura el fotograma actual
-                    current_frame = capture_frame()
-                    # Convierte el fotograma en una imagen
-                    current_image = Image.fromarray(cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB))
-                    # Envía un mensaje por Telegram con la imagen
-                    await send_telegram_message_with_image("¡Alerta! La imagen en pantalla se ha mantenido estática durante mucho tiempo.", current_image)
+            # Continuar con la verificación de la imagen estática
+            if check_static_image(tiempo_de_espera):
+                print("¡Alerta! La imagen en pantalla se ha mantenido estática durante mucho tiempo.")
+                # Captura el fotograma actual
+                current_frame = capture_frame()
+                # Convierte el fotograma en una imagen
+                current_image = Image.fromarray(cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB))
+                # Envía un mensaje por Telegram con la imagen
+                await send_telegram_message_with_image("¡Alerta! La imagen en pantalla se ha mantenido estática durante mucho tiempo.", current_image)
+                #MQTT imagen
+                publish.single("vmix/imagen", payload="Congelado", hostname=mqtt_host, port=mqtt_port, auth={'username': mqtt_user, 'password': mqtt_pass})
+            else:
+                print("¡Alerta! Imagenes distintas")
+                # Captura el fotograma actual
+                current_frame = capture_frame()
+                # Convierte el fotograma en una imagen
+                current_image = Image.fromarray(cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB))
+                # Envía un mensaje por Telegram con la imagen
+                await send_telegram_message_with_image("Imagenes distintas", current_image)
+                publish.single("vmix/imagen", payload="Normal", hostname=mqtt_host, port=mqtt_port, auth={'username': mqtt_user, 'password': mqtt_pass})
+            #MQTT
+            if(audio_alert_sent):
+                publish.single("vmix/audio", payload="Congelado", hostname=mqtt_host, port=mqtt_port, auth={'username': mqtt_user, 'password': mqtt_pass})
+            else:
+                publish.single("vmix/audio", payload="Normal", hostname=mqtt_host, port=mqtt_port, auth={'username': mqtt_user, 'password': mqtt_pass})
     except KeyboardInterrupt:
         print("\nPrograma detenido por el usuario.")
         stream.stop_stream()
