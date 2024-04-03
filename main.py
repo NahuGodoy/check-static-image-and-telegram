@@ -8,6 +8,37 @@ import telegram
 import io
 import credentials as cred
 import paho.mqtt.publish as publish
+import argparse
+
+#Modificable con argumentos
+tiempo_de_espera = 5  # Tiempo de espera para comprobar si la imagen estática permanece en segundos
+THRESHOLD = 0.7  # Umbral de energía para considerar que hay audio
+SILENCE_TIMEOUT = 5  # Tiempo en segundos para considerar que no hay audio
+
+# Función para procesar los argumentos
+def procesar_argumentos():
+    global tiempo_de_espera, THRESHOLD, SILENCE_TIMEOUT
+
+    parser = argparse.ArgumentParser(description='Tiempo y umbral')
+
+    # Agregar argumentos con valores predeterminados
+    parser.add_argument('-tempi', '--tempImage', type=int, default=30, help='Tiempo de espera para comprobar si la imagen estática permanece en segundos')
+    parser.add_argument('-tempa', '--tempAudio', type=int, default=30, help='Tiempo que hasta dar aviso que no hay audio en segundos')
+    parser.add_argument('-umba', '--umbralAudio', type=float, default=0.7, help='Umbral del ruido blanco')
+
+
+    args = parser.parse_args()
+
+    # Modificar las variables según los argumentos recibidos
+    tiempo_de_espera = args.tempImage
+    SILENCE_TIMEOUT = args.tempAudio
+    THRESHOLD = args.umbralAudio
+
+    print(tiempo_de_espera, SILENCE_TIMEOUT, THRESHOLD)
+
+
+# Llamar a la función para procesar los argumentos
+procesar_argumentos()
 
 #MQTT Configuración
 mqtt_host = cred.mqtt_host
@@ -18,8 +49,6 @@ mqtt_pass = cred.mqtt_pass
 # Configuración de audio
 RATE = 44100
 CHUNK = 1024
-THRESHOLD = 0.7  # Umbral de energía para considerar que hay audio
-SILENCE_TIMEOUT = 5  # Tiempo en segundos para considerar que no hay audio
 
 # Configuración de Telegram
 TOKEN = cred.TOKEN
@@ -72,9 +101,6 @@ def is_audio_present(data):
 
 # Función principal
 async def main():
-    # Tiempo de espera para comprobar si la imagen estática permanece
-    tiempo_de_espera = 5  # segundos
-
     print("Iniciando el programa de detección de imágenes estáticas y audio...")
     audio = pyaudio.PyAudio()
     stream = audio.open(format=pyaudio.paInt16, channels=1,
