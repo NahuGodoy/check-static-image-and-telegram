@@ -10,10 +10,10 @@ import credentials as cred
 import paho.mqtt.publish as publish
 
 #MQTT Configuración
-mqtt_host = "190.104.242.106"
-mqtt_port = 1883
-mqtt_user = "prgmqtt"
-mqtt_pass = "Prg.2023"
+mqtt_host = cred.mqtt_host
+mqtt_port = cred.mqtt_port
+mqtt_user = cred.mqtt_user
+mqtt_pass = cred.mqtt_pass
 
 # Configuración de audio
 RATE = 44100
